@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mail, Phone, MapPin, MessageSquare, Send, CheckCircle2 } from 'lucide-react';
+import { Mail, Phone, MapPin, MessageSquare, Send, CheckCircle2, Star } from 'lucide-react';
 import { db, handleFirestoreError, OperationType } from '../../lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, onSnapshot } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
@@ -14,6 +14,12 @@ const Contact = () => {
   });
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [reviewForm, setReviewForm] = useState({
+    name: '',
+    rating: 5,
+    text: ''
+  });
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [settings, setSettings] = useState({
     phone: '+233 50 000 0000',
     email: 'hello@kamaralakeview.com',
@@ -51,6 +57,29 @@ const Contact = () => {
       toast.success('Message sent! Our team will contact you soon.');
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, 'messages');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReviewSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!reviewForm.name || !reviewForm.text) {
+      toast.error('Please provide your name and review text');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await addDoc(collection(db, 'reviews'), {
+        ...reviewForm,
+        status: 'pending',
+        createdAt: serverTimestamp()
+      });
+      setReviewSubmitted(true);
+      toast.success('Your review has been submitted for moderation. Thank you!');
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, 'reviews');
     } finally {
       setLoading(false);
     }
@@ -218,6 +247,101 @@ const Contact = () => {
               )}
             </AnimatePresence>
           </motion.div>
+        </div>
+
+        {/* Review Section */}
+        <div className="mt-32 border-t border-gray-100 pt-32">
+          <div className="bg-white p-8 md:p-16 luxury-shadow relative overflow-hidden max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <span className="text-brand-light uppercase tracking-[0.4em] text-[10px] font-bold mb-4 block">Feedback</span>
+              <h2 className="font-display text-4xl text-brand-dark mb-4">Share Your <span className="italic">Experience</span></h2>
+              <p className="text-gray-500 font-light text-sm max-w-lg mx-auto">
+                Your feedback helps us maintain the highest standards of hospitality. 
+                Submit a review about your recent stay at Kamara Lakeview.
+              </p>
+            </div>
+
+            <AnimatePresence mode="wait">
+              {reviewSubmitted ? (
+                <motion.div
+                  key="review-success"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-center py-12"
+                >
+                  <Star className="w-12 h-12 text-brand-light fill-brand-light mx-auto mb-6 animate-bounce" />
+                  <h3 className="font-display text-2xl text-brand-dark mb-4">Gratitude for Your Feedback</h3>
+                  <p className="text-gray-500 font-light mb-8">
+                    Our team has received your review. Once approved for authenticity, it will shine on our wall of testimonials.
+                  </p>
+                  <button 
+                    onClick={() => {
+                      setReviewSubmitted(false);
+                      setReviewForm({ name: '', rating: 5, text: '' });
+                    }}
+                    className="text-brand-dark text-xs uppercase tracking-widest font-bold border-b border-brand-dark pb-1"
+                  >
+                    Write another review
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.form 
+                  key="review-form"
+                  onSubmit={handleReviewSubmit}
+                  className="space-y-8"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Your Name</label>
+                      <input 
+                        type="text" 
+                        required
+                        value={reviewForm.name}
+                        onChange={e => setReviewForm({ ...reviewForm, name: e.target.value })}
+                        className="w-full border-b border-gray-100 py-3 focus:outline-none focus:border-brand-light text-sm" 
+                        placeholder="Jane Doe" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Rating</label>
+                      <div className="flex gap-2 py-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                            className="focus:outline-none transition-transform hover:scale-110 active:scale-95"
+                          >
+                            <Star 
+                              className={`w-6 h-6 ${star <= reviewForm.rating ? 'text-brand-light fill-brand-light' : 'text-gray-200'}`} 
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Your Perspective</label>
+                    <textarea 
+                      rows={4} 
+                      required
+                      value={reviewForm.text}
+                      onChange={e => setReviewForm({ ...reviewForm, text: e.target.value })}
+                      className="w-full border-b border-gray-100 py-3 focus:outline-none focus:border-brand-light text-sm resize-none italic" 
+                      placeholder="Was your stay as tranquil as we intended?" 
+                    />
+                  </div>
+                  <button 
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-brand-dark text-white py-4 uppercase tracking-widest text-xs font-bold hover:bg-brand-light transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                  >
+                    {loading ? 'Submitting...' : 'Submit Perspective'}
+                  </button>
+                </motion.form>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Map Integration (Placeholder) */}

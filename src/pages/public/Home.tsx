@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Users, ArrowRight, BedDouble, Wifi, Utensils, Car, Loader2 } from 'lucide-react';
+import { 
+  Calendar, Users, ArrowRight, BedDouble, Wifi, Utensils, 
+  Car, Loader2, Star, Quote 
+} from 'lucide-react';
 import { db } from '../../lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, limit, getDocs, doc, getDoc } from 'firebase/firestore';
 
 const Home = () => {
   const [currentImage, setCurrentImage] = useState(0);
@@ -11,6 +14,7 @@ const Home = () => {
   const [checkOut, setCheckOut] = useState('');
   const [guests, setGuests] = useState('2');
   const [settings, setSettings] = useState<any>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -23,11 +27,26 @@ const Home = () => {
         }
       } catch (err) {
         console.warn('Using default hero settings');
-      } finally {
-        setLoading(false);
       }
     };
-    fetchSettings();
+
+    const fetchReviews = async () => {
+      try {
+        const q = query(
+          collection(db, 'reviews'), 
+          where('status', '==', 'approved'),
+          limit(3)
+        );
+        const snap = await getDocs(q);
+        setReviews(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      } catch (err) {
+        console.error('Error fetching reviews:', err);
+      }
+    };
+
+    Promise.all([fetchSettings(), fetchReviews()]).finally(() => {
+      setLoading(false);
+    });
   }, []);
 
   const heroImages = settings?.heroImage ? [settings.heroImage] : [
@@ -195,6 +214,69 @@ const Home = () => {
           ))}
         </div>
       </section>
+
+      {/* Testimonials */}
+      {reviews.length > 0 && (
+        <section className="py-32 bg-white relative overflow-hidden">
+          {/* Decorative Quote Mark */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 opacity-[0.03] select-none pointer-events-none">
+            <Quote className="w-[400px] h-[400px] text-brand-dark" />
+          </div>
+
+          <div className="max-w-7xl mx-auto px-6 relative z-10">
+            <div className="text-center mb-20">
+              <span className="text-brand-light uppercase tracking-[0.4em] text-[10px] font-bold mb-4 block underline underline-offset-8">Testimonials</span>
+              <h2 className="font-display text-4xl md:text-6xl text-brand-dark mb-4">Guest Perspective</h2>
+              <p className="text-gray-500 font-light max-w-xl mx-auto text-sm leading-relaxed">
+                Authentic experiences shared by our global community of travelers.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+              {reviews.map((review, idx) => (
+                <motion.div
+                  key={review.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="bg-luxury-cream p-10 luxury-shadow border-t-4 border-brand-light relative"
+                >
+                  <div className="flex gap-1 mb-6">
+                    {[...Array(5)].map((_, i) => (
+                      <Star 
+                        key={i} 
+                        className={`w-3 h-3 ${i < review.rating ? 'text-brand-light fill-brand-light' : 'text-gray-200'}`} 
+                      />
+                    ))}
+                  </div>
+                  <p className="text-gray-600 italic font-light leading-relaxed mb-8 text-sm">
+                    "{review.text}"
+                  </p>
+                  <div className="flex items-center gap-4 border-t border-brand-dark/10 pt-6">
+                    <div className="w-10 h-10 rounded-full bg-brand-dark text-white flex items-center justify-center font-display text-lg font-bold">
+                      {review.name.charAt(0)}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-brand-dark text-sm">{review.name}</h4>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-widest">Verified Stay</p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            
+            <div className="text-center mt-16">
+              <button 
+                onClick={() => navigate('/contact')}
+                className="text-brand-dark text-[10px] font-bold uppercase tracking-widest border-b-2 border-brand-light pb-1 hover:text-brand-light transition-all"
+              >
+                Share your journey
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 };

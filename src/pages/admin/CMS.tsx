@@ -3,7 +3,8 @@ import AdminSidebar from '../../components/layout/AdminSidebar';
 import { 
   Save, Image as ImageIcon, Type, Globe, Layout, Check, 
   Palette, Upload, Loader2, Trash2, Plus, TrendingUp, 
-  BarChart4, DollarSign, Calendar, MessageSquare, Utensils 
+  BarChart4, DollarSign, Calendar, MessageSquare, Utensils, Star,
+  CheckCircle2, XCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'react-hot-toast';
@@ -31,6 +32,7 @@ const CMS = () => {
   });
 
   const [gallery, setGallery] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalBookings: 0,
     totalRevenue: 0,
@@ -67,9 +69,42 @@ const CMS = () => {
       setGallery(docs);
     });
 
+    // Reviews listener
+    const unsubscribeReviews = onSnapshot(collection(db, 'reviews'), (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      docs.sort((a: any, b: any) => {
+        const timeA = a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.seconds || 0;
+        return timeB - timeA;
+      });
+      setReviews(docs);
+    });
+
     fetchContent();
-    return () => unsubscribeGallery();
+    return () => {
+      unsubscribeGallery();
+      unsubscribeReviews();
+    };
   }, []);
+
+  const handleReviewAction = async (id: string, status: 'approved' | 'rejected') => {
+    try {
+      await setDoc(doc(db, 'reviews', id), { status }, { merge: true });
+      toast.success(`Review ${status}`);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `reviews/${id}`);
+    }
+  };
+
+  const handleDeleteReview = async (id: string) => {
+    if (!confirm('Permanently delete this review?')) return;
+    try {
+      await deleteDoc(doc(db, 'reviews', id));
+      toast.success('Review deleted');
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `reviews/${id}`);
+    }
+  };
 
   useEffect(() => {
     if (activeTab === 'Analytics') {
@@ -206,6 +241,7 @@ const CMS = () => {
     { id: 'General', icon: Globe },
     { id: 'Homepage', icon: Layout },
     { id: 'Gallery', icon: ImageIcon },
+    { id: 'Reviews', icon: Star },
     { id: 'Analytics', icon: BarChart4 },
     { id: 'Visuals', icon: Palette },
     { id: 'Hero media', icon: ImageIcon },
@@ -423,6 +459,102 @@ const CMS = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'Reviews' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
+                <div className="flex justify-between items-center border-b border-gray-100 pb-4">
+                  <div className="flex items-center gap-3">
+                    <Star className="w-4 h-4 text-brand-light" />
+                    <h3 className="font-display text-2xl text-brand-dark">Guest Review Moderation</h3>
+                  </div>
+                  <div className="flex gap-4">
+                    <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">
+                      {reviews.filter(r => r.status === 'pending').length} Pending
+                    </span>
+                    <span className="text-[10px] uppercase tracking-widest text-brand-light font-bold">
+                      {reviews.filter(r => r.status === 'approved').length} Approved
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  {reviews.length === 0 ? (
+                    <div className="py-20 text-center border-2 border-dashed border-gray-100 italic text-gray-300">
+                      No reviews submitted through the platform yet.
+                    </div>
+                  ) : (
+                    reviews.map((review) => (
+                      <div 
+                        key={review.id} 
+                        className={`p-8 luxury-shadow border-l-4 transition-all ${
+                          review.status === 'approved' ? 'border-green-500 bg-white' : 
+                          review.status === 'rejected' ? 'border-red-500 bg-gray-50' : 
+                          'border-yellow-500 bg-white'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h4 className="font-bold text-brand-dark flex items-center gap-2">
+                              {review.name}
+                              <span className="text-gray-300 text-[10px] font-mono">
+                                {review.createdAt?.toDate().toLocaleDateString() || 'Just now'}
+                              </span>
+                            </h4>
+                            <div className="flex gap-1 mt-1">
+                              {[...Array(5)].map((_, i) => (
+                                <Star 
+                                  key={i} 
+                                  className={`w-3 h-3 ${i < (review.rating || 0) ? 'text-brand-light fill-brand-light' : 'text-gray-200'}`} 
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            {review.status !== 'approved' && (
+                              <button 
+                                onClick={() => handleReviewAction(review.id, 'approved')}
+                                className="p-2 text-gray-300 hover:text-green-500 transition-colors"
+                                title="Approve"
+                              >
+                                <CheckCircle2 className="w-4 h-4" />
+                              </button>
+                            )}
+                            {review.status !== 'rejected' && (
+                              <button 
+                                onClick={() => handleReviewAction(review.id, 'rejected')}
+                                className="p-2 text-gray-300 hover:text-red-500 transition-colors"
+                                title="Reject"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </button>
+                            )}
+                            <button 
+                              onClick={() => handleDeleteReview(review.id)}
+                              className="p-2 text-gray-300 hover:text-red-600 transition-colors"
+                              title="Delete Permanently"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-600 leading-relaxed italic">
+                          "{review.text}"
+                        </p>
+                        <div className="mt-4 flex items-center justify-end">
+                          <span className={`text-[8px] uppercase tracking-widest font-black px-2 py-0.5 rounded-full ${
+                            review.status === 'approved' ? 'bg-green-100 text-green-700' :
+                            review.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                            'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {review.status || 'pending'}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </motion.div>
             )}
