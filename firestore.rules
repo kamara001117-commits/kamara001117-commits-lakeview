@@ -1,0 +1,162 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function getProfile(userId) {
+      return get(/databases/$(database)/documents/profiles/$(userId)).data;
+    }
+
+    function hasRole(role) {
+      return isSignedIn() && getProfile(request.auth.uid).role == role;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        getProfile(request.auth.uid).role == 'admin' || 
+        request.auth.token.email == 'kamara001117@gmail.com'
+      );
+    }
+
+    function isStaff() {
+      return isSignedIn() && (
+        getProfile(request.auth.uid).role in ['admin', 'front_desk', 'restaurant', 'kitchen'] ||
+        request.auth.token.email == 'kamara001117@gmail.com'
+      );
+    }
+
+    // 1. Profiles
+    match /profiles/{userId} {
+      function isValidProfile(data) {
+        return data.keys().hasAll(['email', 'role']) &&
+               data.keys().size() <= 6 &&
+               data.email is string && data.email.size() <= 100 &&
+               data.role in ['admin', 'front_desk', 'restaurant', 'kitchen'] &&
+               (data.get('name', '') is string && data.get('name', '').size() <= 100);
+      }
+
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && (request.auth.uid == userId || isAdmin()) && isValidProfile(incoming());
+      allow update: if isSignedIn() && (
+        (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'email'])) ||
+        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['role', 'name', 'email', 'updatedAt']))
+      ) && isValidProfile(incoming());
+      allow delete: if isAdmin() && userId != request.auth.uid;
+    }
+
+    // 2. Rooms
+    match /rooms/{roomId} {
+      function isValidRoom(data) {
+        return data.keys().hasAll(['name', 'type', 'price']) &&
+               data.name is string && data.name.size() <= 50 &&
+               data.type in ['Executive Plus', 'Executive', 'Standard'] &&
+               data.price is number && data.price >= 0;
+      }
+
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if (isAdmin() || hasRole('front_desk')) && isValidRoom(incoming());
+    }
+
+    // 3. Bookings
+    match /bookings/{bookingId} {
+      function isValidBooking(data) {
+        return data.keys().hasAll(['roomId', 'guestName', 'checkIn', 'checkOut', 'totalPrice']) &&
+               data.guestName is string && data.guestName.size() <= 100 &&
+               data.roomId is string && data.roomId.size() <= 50 &&
+               data.totalPrice is number && data.totalPrice >= 0;
+      }
+
+      allow list: if isStaff();
+      allow get: if isStaff(); 
+      allow create: if true; 
+      allow update: if isStaff() && isValidBooking(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // 4. Menu Items
+    match /menu_items/{itemId} {
+      function isValidMenuItem(data) {
+        return data.keys().hasAll(['name', 'price', 'category']) &&
+               data.name is string && data.name.size() <= 50 &&
+               data.price is number && data.price >= 0 &&
+               data.category in ['Breakfast', 'Lunch', 'Dinner', 'Drinks'];
+      }
+
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 5. Orders
+    match /orders/{orderId} {
+      function isValidOrder(data) {
+        return data.keys().hasAll(['status', 'totalAmount']) &&
+               data.status in ['pending', 'preparing', 'ready', 'delivered'] &&
+               data.totalAmount is number && data.totalAmount >= 0;
+      }
+
+      allow read: if isStaff();
+      allow create: if hasRole('restaurant') || hasRole('admin');
+      allow update: if isStaff() && isValidOrder(incoming()) && (
+        (hasRole('kitchen') && incoming().diff(existing()).affectedKeys().hasOnly(['status'])) ||
+        (hasRole('restaurant') || isAdmin())
+      );
+    }
+
+    match /orders/{orderId}/items/{itemId} {
+      allow read: if isStaff();
+      allow write: if hasRole('restaurant') || isAdmin();
+    }
+
+    // 6. Content
+    match /content/{contentKey} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 7. Settings
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 8. Gallery
+    match /gallery/{imageId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 9. Messages
+    match /messages/{messageId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // 10. Reservations (Dining)
+    match /reservations/{resId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}

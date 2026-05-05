@@ -1,0 +1,15 @@
+{
+  "name": "Kamara Lakeview Hotel",
+  "description": "Premium luxury hotel website and hospitality management system for Kamara Lakeview Hotel in Wa, Ghana.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "Booking System",
+    "Hotel Management",
+    "Restaurant POS",
+    "Real-time Dashboard"
+  ]
+}

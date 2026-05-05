@@ -1,0 +1,147 @@
+{
+  "entities": {
+    "Profile": {
+      "title": "User Profile",
+      "description": "Information about staff members and their roles",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "front_desk", "restaurant", "kitchen"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    },
+    "Room": {
+      "title": "Hotel Room",
+      "description": "Details about a room available for booking",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["Executive Plus", "Executive", "Standard"] },
+        "price": { "type": "number" },
+        "description": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "features": { "type": "array", "items": { "type": "string" } },
+        "isAvailable": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["available", "occupied", "cleaning", "maintenance"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "type", "price"]
+    },
+    "Booking": {
+      "title": "Room Reservation",
+      "description": "A booking made by a guest",
+      "type": "object",
+      "properties": {
+        "roomId": { "type": "string" },
+        "guestName": { "type": "string" },
+        "guestEmail": { "type": "string" },
+        "guestPhone": { "type": "string" },
+        "checkIn": { "type": "string", "format": "date" },
+        "checkOut": { "type": "string", "format": "date" },
+        "totalPrice": { "number": "number" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled", "checked_in", "checked_out"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["roomId", "guestName", "checkIn", "checkOut", "totalPrice"]
+    },
+    "MenuItem": {
+      "title": "Restaurant Menu Item",
+      "description": "A food or drink item available in the restaurant",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string", "enum": ["Breakfast", "Lunch", "Dinner", "Drinks"] },
+        "isAvailable": { "type": "boolean" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["name", "price", "category"]
+    },
+    "GalleryImage": {
+      "title": "Gallery Image",
+      "description": "An image displayed in the public gallery",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" },
+        "caption": { "type": "string" },
+        "category": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["url", "createdAt"]
+    },
+    "Order": {
+      "title": "Food Order",
+      "description": "An order placed for restaurant or room service",
+      "type": "object",
+      "properties": {
+        "roomId": { "type": "string" },
+        "tableNumber": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "preparing", "ready", "delivered"] },
+        "totalAmount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["status", "totalAmount"]
+    },
+    "OrderItem": {
+      "title": "Ordered Item",
+      "description": "Individual items within a food order",
+      "type": "object",
+      "properties": {
+        "menuItemId": { "type": "string" },
+        "name": { "type": "string" },
+        "quantity": { "type": "number" },
+        "priceAtTime": { "type": "number" }
+      },
+      "required": ["menuItemId", "name", "quantity", "priceAtTime"]
+    },
+    "Content": {
+      "title": "CMS Content",
+      "description": "Dynamic website content for various pages",
+      "type": "object",
+      "properties": {
+        "value": { "type": "object" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["value"]
+    }
+  },
+  "firestore": {
+    "/profiles/{userId}": {
+      "schema": "Profile",
+      "description": "Staff profiles"
+    },
+    "/rooms/{roomId}": {
+      "schema": "Room",
+      "description": "Hotel room inventory"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Guest bookings"
+    },
+    "/menu_items/{itemId}": {
+      "schema": "MenuItem",
+      "description": "Restaurant menu"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Restaurant orders"
+    },
+    "/orders/{orderId}/items/{itemId}": {
+      "schema": "OrderItem",
+      "description": "Items in a specific order"
+    },
+    "/content/{contentKey}": {
+      "schema": "Content",
+      "description": "CMS content"
+    },
+    "/gallery/{imageId}": {
+      "schema": "GalleryImage",
+      "description": "Public gallery images"
+    }
+  }
+}
