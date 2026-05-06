@@ -24,6 +24,7 @@ import { auth, db, handleFirestoreError, OperationType } from './lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { User } from './types';
+import Logo from './components/Logo';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -74,7 +75,7 @@ function App() {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-luxury-cream">
         <div className="animate-pulse flex flex-col items-center">
-          <img src="/kamaralakeview-logo.png" alt="Kamara Logo" className="h-24 mb-4" />
+          <Logo variant="brand" className="h-24 mb-4" />
           <p className="font-display italic text-brand-dark">Loading tranquility...</p>
         </div>
       </div>

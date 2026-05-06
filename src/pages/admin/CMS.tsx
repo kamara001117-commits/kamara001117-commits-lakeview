@@ -21,14 +21,14 @@ const CMS = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
-  const [content, setContent] = useState({
+  const [content, setContent] = useState<any>({
     hotelName: 'Kamara Lakeview Hotel',
     metaDescription: 'Premium luxury hotel website and hospitality management system for Kamara Lakeview Hotel in Wa, Ghana.',
     phone: '+233 50 000 0000',
     email: 'hello@kamaralakeview.com',
     tagline: 'Experience Comfort. Embrace Tranquility.',
     secondaryHeader: 'Welcome to Kamara Lakeview Hotel, where luxury meets serene beauty in the heart of Wa.',
-    heroImage: '/main-homepage-1.png'
+    heroImages: ['/main-homepage-1.png', '/main-homepage-2.png']
   });
 
   const [gallery, setGallery] = useState<any[]>([]);
@@ -155,7 +155,7 @@ const CMS = () => {
     }
   };
 
-  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (index: number) => (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -166,8 +166,10 @@ const CMS = () => {
 
     const reader = new FileReader();
     reader.onloadend = () => {
-      setContent(prev => ({ ...prev, heroImage: reader.result as string }));
-      toast.success('New hero image staged for publishing');
+      const newImages = [...(content.heroImages || [])];
+      newImages[index] = reader.result as string;
+      setContent((prev: any) => ({ ...prev, heroImages: newImages }));
+      toast.success(`${index === 0 ? 'Main' : 'Alternative'} hero image staged`);
     };
     reader.readAsDataURL(file);
   };
@@ -714,12 +716,18 @@ const CMS = () => {
                       <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block">Main Hero Image</label>
                       <div className="aspect-[16/9] bg-gray-100 relative group overflow-hidden border border-dashed border-gray-300">
                         <img 
-                          src={content.heroImage} 
+                          src={content.heroImages?.[0] || content.heroImage || '/main-homepage-1.png'} 
                           className="w-full h-full object-cover group-hover:opacity-50 transition-all" 
                         />
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all bg-brand-dark/20 backdrop-blur-[2px]">
                           <button 
-                            onClick={() => fileInputRef.current?.click()}
+                            onClick={() => {
+                              const input = document.createElement('input');
+                              input.type = 'file';
+                              input.accept = 'image/*';
+                              input.onchange = (e: any) => handleImageUpload(0)(e);
+                              input.click();
+                            }}
                             className="bg-white text-brand-dark px-6 py-2 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2"
                           >
                             <Upload className="w-3 h-3" />
@@ -730,14 +738,44 @@ const CMS = () => {
                     </div>
                     <div className="space-y-4">
                       <label className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block">Alternative Hero</label>
-                      <div className="aspect-[16/9] bg-gray-100 relative group overflow-hidden border border-dashed border-gray-300 flex items-center justify-center">
-                        <button 
-                          onClick={() => fileInputRef.current?.click()}
-                          className="flex flex-col items-center gap-2 text-gray-400 hover:text-brand-dark transition-all"
-                        >
-                          <ImageIcon className="w-6 h-6" />
-                          <span className="text-[10px] font-bold uppercase tracking-widest">Upload Media</span>
-                        </button>
+                      <div className="aspect-[16/9] bg-gray-100 relative group overflow-hidden border border-dashed border-gray-300">
+                        {content.heroImages?.[1] ? (
+                          <>
+                            <img 
+                              src={content.heroImages[1]} 
+                              className="w-full h-full object-cover group-hover:opacity-50 transition-all" 
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all bg-brand-dark/20 backdrop-blur-[2px]">
+                              <button 
+                                onClick={() => {
+                                  const input = document.createElement('input');
+                                  input.type = 'file';
+                                  input.accept = 'image/*';
+                                  input.onchange = (e: any) => handleImageUpload(1)(e);
+                                  input.click();
+                                }}
+                                className="bg-white text-brand-dark px-6 py-2 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2"
+                              >
+                                <Upload className="w-3 h-3" />
+                                Replace Asset
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <button 
+                            onClick={() => {
+                              const input = document.createElement('input');
+                              input.type = 'file';
+                              input.accept = 'image/*';
+                              input.onchange = (e: any) => handleImageUpload(1)(e);
+                              input.click();
+                            }}
+                            className="flex flex-col items-center gap-2 text-gray-400 hover:text-brand-dark transition-all"
+                          >
+                            <ImageIcon className="w-6 h-6" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">Upload Media</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -5,6 +5,7 @@ import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 
 import { toast } from 'react-hot-toast';
 import { Lock, Mail, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
+import Logo from '../../components/Logo';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -49,7 +50,7 @@ const AdminLogin = () => {
         className="w-full max-w-md bg-white rounded-none p-10 md:p-12 shadow-2xl"
       >
         <div className="flex flex-col items-center mb-10">
-          <img src="/kamaralakeview-logo.png" alt="Kamara Logo" className="h-16 mb-6" />
+          <Logo variant="brand" className="h-16 mb-6" />
           <h2 className="font-display text-2xl text-brand-dark lowercase tracking-tighter">Staff Portal</h2>
           <div className="h-[1px] w-12 bg-brand-light mt-4" />
         </div>

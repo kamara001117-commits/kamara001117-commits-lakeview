@@ -5,6 +5,7 @@ import { Menu, X } from 'lucide-react';
 import { cn } from '../../types';
 import { db } from '../../lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
+import Logo from '../Logo';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -60,15 +61,11 @@ const Navbar = () => {
             "transition-all duration-500 flex items-center gap-3",
             isScrolled || !isHome ? "h-12 md:h-14" : "h-16 md:h-20"
           )}>
-            <img
-              src="/kamaralakeview-logo.png"
-              alt={hotelName}
-              className="h-full w-auto object-contain brightness-110"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
+            <Logo 
+              variant={isScrolled || !isHome ? 'brand' : 'light'} 
+              className="h-full"
             />
-            {/* Fallback Text Logo if image fails */}
+            {/* Fallback Text Logo */}
             <div className={cn(
               "font-display flex flex-col justify-center",
               (isScrolled || !isHome) ? "text-brand-dark" : "text-white"
@@ -76,7 +73,7 @@ const Navbar = () => {
               <span className="text-2xl md:text-4xl font-extrabold tracking-tighter leading-none group-hover:text-brand-light transition-colors drop-shadow-md">
                 {primaryName}
               </span>
-              <span className="text-[10px] md:text-[12px] tracking-[0.5em] font-bold opacity-100 mt-1">
+              <span className="text-[10px] md:text-[12px] tracking-[0.5em] font-bold opacity-100 mt-1 uppercase">
                 {secondaryName}
               </span>
             </div>

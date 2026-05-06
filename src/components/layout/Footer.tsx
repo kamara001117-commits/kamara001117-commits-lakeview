@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
+import Logo from '../Logo';
 
 const Footer = () => {
   const [settings, setSettings] = useState({
@@ -34,7 +35,7 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
         {/* Brand & Mission */}
         <div className="md:col-span-1">
-          <img src="/kamaralakeview-logo.png" alt="Kamara Logo" className="h-16 mb-6 brightness-0 invert" />
+          <Logo variant="light" className="h-16 mb-6" />
           <p className="text-gray-300 text-sm leading-relaxed mb-6 italic">
             "{settings.tagline}"
           </p>

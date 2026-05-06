@@ -15,6 +15,7 @@ import {
 import { auth, db } from '../../lib/firebase';
 import { signOut } from 'firebase/auth';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import Logo from '../Logo';
 
 const AdminSidebar = () => {
   const location = useLocation();
@@ -47,8 +48,8 @@ const AdminSidebar = () => {
 
   return (
     <div className="w-64 h-screen bg-brand-dark flex flex-col fixed left-0 top-0 text-white z-50">
-      <div className="p-8 border-b border-white/10 mb-8 items-center flex flex-col">
-        <img src="/kamaralakeview-logo.png" alt="Logo" className="h-10 brightness-0 invert mb-4" />
+      <div className="p-8 border-b border-white/10 mb-8 items-center flex flex-col justify-center">
+        <Logo variant="light" className="h-12 mb-4" />
         <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-brand-light">Management</span>
       </div>
 

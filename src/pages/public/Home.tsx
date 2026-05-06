@@ -49,10 +49,14 @@ const Home = () => {
     });
   }, []);
 
-  const heroImages = settings?.heroImage ? [settings.heroImage] : [
-    '/main-homepage-1.png',
-    '/main-homepage-2.png'
-  ];
+  const heroImages = Array.isArray(settings?.heroImages) 
+    ? settings.heroImages 
+    : settings?.heroImage 
+      ? [settings.heroImage] 
+      : [
+        '/main-homepage-1.png',
+        '/main-homepage-2.png'
+      ];
 
   useEffect(() => {
     if (heroImages.length <= 1) return;
