@@ -28,6 +28,8 @@ const Gallery = () => {
         }
       });
       combineImages();
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'rooms');
     });
 
     const unsubscribeGallery = onSnapshot(qGallery, (snapshot) => {
@@ -36,6 +38,8 @@ const Gallery = () => {
         return { src: data.url, roomName: data.caption || 'Gallery Image' };
       });
       combineImages();
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'gallery');
     });
 
     const combineImages = () => {

@@ -149,14 +149,44 @@ service cloud.firestore {
 
     // 9. Messages
     match /messages/{messageId} {
+      function isValidMessage(data) {
+        return data.keys().hasAll(['name', 'email', 'message', 'status']) &&
+               data.name is string && data.name.size() <= 100 &&
+               data.email is string && data.email.size() <= 100 &&
+               data.message is string && data.message.size() <= 2000 &&
+               data.status in ['unread', 'read', 'archived'];
+      }
+
       allow create: if true;
-      allow read, update, delete: if isAdmin();
+      allow read, update, delete: if isStaff();
     }
 
     // 10. Reservations (Dining)
     match /reservations/{resId} {
+      function isValidReservation(data) {
+        return data.keys().hasAll(['name', 'date', 'time', 'guests', 'status']) &&
+               data.name is string && data.name.size() <= 100 &&
+               data.guests is string && data.guests.size() <= 20 &&
+               data.status in ['pending', 'confirmed', 'cancelled'];
+      }
+
       allow create: if true;
-      allow read, update, delete: if isAdmin();
+      allow read, update, delete: if isStaff();
+    }
+
+    // 11. Reviews
+    match /reviews/{reviewId} {
+      function isValidReview(data) {
+        return data.keys().hasAll(['name', 'rating', 'text', 'status']) &&
+               data.name is string && data.name.size() <= 50 &&
+               data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+               data.text is string && data.text.size() <= 1000 &&
+               data.status in ['pending', 'approved', 'rejected'];
+      }
+
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isStaff();
     }
   }
 }

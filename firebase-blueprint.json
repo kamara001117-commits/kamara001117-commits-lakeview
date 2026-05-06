@@ -108,6 +108,49 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["value"]
+    },
+    "Review": {
+      "title": "Guest Review",
+      "description": "Feed back and ratings from guests",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "rating": { "type": "number", "minimum": 1, "maximum": 5 },
+        "text": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "rating", "text", "status"]
+    },
+    "Message": {
+      "title": "Contact Message",
+      "description": "Inquiries sent via contact form",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["unread", "read", "archived"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "message", "status"]
+    },
+    "Reservation": {
+      "title": "Dining Reservation",
+      "description": "Table bookings for the restaurant",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "time": { "type": "string" },
+        "guests": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "date", "time", "guests", "status"]
     }
   },
   "firestore": {
@@ -142,6 +185,18 @@
     "/gallery/{imageId}": {
       "schema": "GalleryImage",
       "description": "Public gallery images"
+    },
+    "/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Guest reviews"
+    },
+    "/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Contact form messages"
+    },
+    "/reservations/{resId}": {
+      "schema": "Reservation",
+      "description": "Dining reservations"
     }
   }
 }

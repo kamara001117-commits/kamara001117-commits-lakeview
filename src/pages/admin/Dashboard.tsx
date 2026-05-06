@@ -71,51 +71,65 @@ const AdminDashboard = ({ user }: DashboardProps) => {
     const unsubscribeBookings = onSnapshot(bQuery, (snapshot) => {
       const bookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setRecentBookings(bookings);
-      
-      const fullBookingsQuery = collection(db, 'bookings');
-      onSnapshot(fullBookingsQuery, (fullSnap) => {
-        let revenue = 0;
-        let active = 0;
-        fullSnap.docs.forEach(doc => {
-          const data = doc.data();
-          if (['confirmed', 'checked_in', 'checked_out'].includes(data.status)) {
-            revenue += (data.totalPrice || 0);
-          }
-          if (data.status === 'checked_in') {
-            active += 1;
-          }
-        });
-
-        // 2. Fetch Restaurant Reservations
-        onSnapshot(collection(db, 'reservations'), (resSnap) => {
-          const restaurantResCount = resSnap.docs.length;
-
-          // 3. Fetch Rooms to calculate occupancy
-          onSnapshot(collection(db, 'rooms'), (roomSnap) => {
-            const rooms = roomSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-            setRoomData(rooms);
-            
-            const totalRooms = rooms.length;
-            const occupiedRooms = rooms.filter((d: any) => d.status === 'occupied' || d.status === 'maintenance').length;
-            const occupancy = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
-
-            setStatsData({
-              totalBookings: fullSnap.docs.length,
-              totalRevenue: revenue,
-              activeGuests: active,
-              occupancyRate: occupancy,
-              restaurantBookings: restaurantResCount
-            });
-            setLoading(false);
-          });
-        });
-      });
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'bookings');
     });
 
+    const fullBookingsQuery = collection(db, 'bookings');
+    const unsubscribeFullBookings = onSnapshot(fullBookingsQuery, (fullSnap) => {
+      let revenue = 0;
+      let active = 0;
+      fullSnap.docs.forEach(doc => {
+        const data = doc.data();
+        if (['confirmed', 'checked_in', 'checked_out'].includes(data.status)) {
+          revenue += (data.totalPrice || 0);
+        }
+        if (data.status === 'checked_in') {
+          active += 1;
+        }
+      });
+
+      setStatsData(prev => ({
+        ...prev,
+        totalBookings: fullSnap.docs.length,
+        totalRevenue: revenue,
+        activeGuests: active
+      }));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'bookings');
+    });
+
+    const unsubscribeReservations = onSnapshot(collection(db, 'reservations'), (resSnap) => {
+      setStatsData(prev => ({
+        ...prev,
+        restaurantBookings: resSnap.docs.length
+      }));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'reservations');
+    });
+
+    const unsubscribeRooms = onSnapshot(collection(db, 'rooms'), (roomSnap) => {
+      const rooms = roomSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setRoomData(rooms);
+      
+      const totalRooms = rooms.length;
+      const occupiedRooms = rooms.filter((d: any) => d.status === 'occupied' || d.status === 'maintenance').length;
+      const occupancy = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
+
+      setStatsData(prev => ({
+        ...prev,
+        occupancyRate: occupancy
+      }));
+      setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'rooms');
+    });
+
     return () => {
       unsubscribeBookings();
+      unsubscribeFullBookings();
+      unsubscribeReservations();
+      unsubscribeRooms();
     };
   }, []);
 

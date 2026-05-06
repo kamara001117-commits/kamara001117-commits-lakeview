@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X } from 'lucide-react';
 import { cn } from '../../types';
-import { db } from '../../lib/firebase';
+import { db, handleFirestoreError, OperationType } from '../../lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import Logo from '../Logo';
 
@@ -25,6 +25,8 @@ const Navbar = () => {
       if (docSnap.exists() && docSnap.data().hotelName) {
         setHotelName(docSnap.data().hotelName.toUpperCase());
       }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'settings/appearance');
     });
 
     return () => {

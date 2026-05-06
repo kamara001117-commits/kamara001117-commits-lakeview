@@ -34,6 +34,8 @@ const Contact = () => {
           email: data.email || 'hello@kamaralakeview.com',
         });
       }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'settings/appearance');
     });
 
     return () => unsubscribe();
