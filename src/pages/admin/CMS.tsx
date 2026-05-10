@@ -18,7 +18,6 @@ const CMS = () => {
   const [activeTab, setActiveTab] = useState('General');
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const [content, setContent] = useState<any>({
@@ -294,14 +293,6 @@ const CMS = () => {
               </button>
             ))}
           </div>
-
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden" 
-            accept="image/*"
-            onChange={handleImageUpload}
-          />
 
           <input 
             type="file" 

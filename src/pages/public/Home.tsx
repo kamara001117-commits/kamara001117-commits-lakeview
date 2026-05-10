@@ -5,7 +5,7 @@ import {
   Calendar, Users, ArrowRight, BedDouble, Wifi, Utensils, 
   Car, Loader2, Star, Quote 
 } from 'lucide-react';
-import { db } from '../../lib/firebase';
+import { db, handleFirestoreError, OperationType } from '../../lib/firebase';
 import { collection, query, where, limit, getDocs, doc, getDoc } from 'firebase/firestore';
 
 const Home = () => {
@@ -26,7 +26,7 @@ const Home = () => {
           setSettings(docSnap.data());
         }
       } catch (err) {
-        console.warn('Using default hero settings');
+        handleFirestoreError(err, OperationType.GET, 'settings/appearance');
       }
     };
 
@@ -40,7 +40,7 @@ const Home = () => {
         const snap = await getDocs(q);
         setReviews(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       } catch (err) {
-        console.error('Error fetching reviews:', err);
+        handleFirestoreError(err, OperationType.GET, 'reviews');
       }
     };
 
@@ -49,7 +49,7 @@ const Home = () => {
     });
   }, []);
 
-  const heroImages = Array.isArray(settings?.heroImages) 
+  const rawHeroImages = Array.isArray(settings?.heroImages) 
     ? settings.heroImages 
     : settings?.heroImage 
       ? [settings.heroImage] 
@@ -57,6 +57,8 @@ const Home = () => {
         '/main-homepage-1.png',
         '/main-homepage-2.png'
       ];
+
+  const heroImages = rawHeroImages.filter(Boolean);
 
   useEffect(() => {
     if (heroImages.length <= 1) return;
